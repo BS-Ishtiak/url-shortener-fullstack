@@ -1,38 +1,52 @@
 import app from './app';
+import { initializeDatabase, closeDatabase } from './utils/database';
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-const server = app.listen(PORT, () => {
-  console.log(
-    `\n✅ Server is running on http://${HOST}:${PORT}`
-  );
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}\n`);
-});
+const startServer = async () => {
+  try {
+    // Initialize database
+    await initializeDatabase();
 
-// Graceful shutdown handlers
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-});
+    const server = app.listen(PORT, () => {
+      console.log(
+        `\n✅ Server is running on http://${HOST}:${PORT}`
+      );
+      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+    });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-});
+    // Graceful shutdown handlers
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM signal received: closing HTTP server');
+      server.close(async () => {
+        await closeDatabase();
+        console.log('HTTP server closed');
+        process.exit(0);
+      });
+    });
 
-// Unhandled rejection handler
-process.on('unhandledRejection', (reason: Error) => {
-  console.error('Unhandled Rejection at:', reason);
-  server.close(() => {
+    process.on('SIGINT', () => {
+      console.log('SIGINT signal received: closing HTTP server');
+      server.close(async () => {
+        await closeDatabase();
+        console.log('HTTP server closed');
+        process.exit(0);
+      });
+    });
+
+    // Unhandled rejection handler
+    process.on('unhandledRejection', async (reason: Error) => {
+      console.error('Unhandled Rejection at:', reason);
+      await closeDatabase();
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
     process.exit(1);
-  });
-});
+  }
+};
 
-export default server;
+startServer();
+
+export default app;

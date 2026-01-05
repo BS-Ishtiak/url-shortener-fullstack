@@ -1,9 +1,10 @@
-import 'src/types/express';
+/// <reference path="./types/express.d.ts" />
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import requestIdMiddleware from './middlewares/requestId.middleware';
 import securityMiddleware from './middlewares/security.middleware';
 import errorHandler from './middlewares/error.middleware';
+import { dbHealthCheck } from './config/database';
 
 const app: Application = express();
 
@@ -28,13 +29,23 @@ app.use(express.urlencoded({ limit: '10kb', extended: true }));
 // Security headers
 app.use(securityMiddleware);
 
-// Health check
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+// Health check with database status
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    const dbHealth = await dbHealthCheck();
+    res.status(200).json({
+      status: 'ok',
+      database: dbHealth ? 'connected' : 'disconnected',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      database: 'disconnected',
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // API info
