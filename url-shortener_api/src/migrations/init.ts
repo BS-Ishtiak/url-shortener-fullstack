@@ -15,7 +15,7 @@ export const createUsersTable = async (): Promise<void> => {
   `;
 
   await pool.query(query);
-  console.log("✅ Users table created");
+  console.log("Users table created");
 };
 
 // Create urls table
@@ -36,7 +36,7 @@ export const createUrlsTable = async (): Promise<void> => {
   `;
 
   await pool.query(query);
-  console.log("✅ URLs table created");
+  console.log("URLs table created");
 };
 
 // Create analytics table
@@ -56,19 +56,19 @@ export const createAnalyticsTable = async (): Promise<void> => {
   `;
 
   await pool.query(query);
-  console.log("✅ Analytics table created");
+  console.log("Analytics table created");
 };
 
 // Run all migrations
 export const runMigrations = async (): Promise<void> => {
   try {
-    console.log("🔄 Running migrations...");
+    console.log("Running migrations...");
     await createUsersTable();
     await createUrlsTable();
     await createAnalyticsTable();
-    console.log("✅ All migrations completed");
+    console.log("All migrations completed");
   } catch (error) {
-    console.error("❌ Migration failed:", error);
+    console.error("Migration failed:", error);
     process.exit(1);
   }
 };

@@ -1,10 +1,14 @@
 /// <reference path="./types/express.d.ts" />
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 import requestIdMiddleware from './middlewares/requestId.middleware';
 import securityMiddleware from './middlewares/security.middleware';
 import errorHandler from './middlewares/error.middleware';
 import { dbHealthCheck } from './config/database';
+import { swaggerSpec } from './config/swagger';
+import authRoutes from './routes/auth.routes';
+import urlRoutes from './routes/url.routes';
 
 const app: Application = express();
 
@@ -28,6 +32,13 @@ app.use(express.urlencoded({ limit: '10kb', extended: true }));
 
 // Security headers
 app.use(securityMiddleware);
+
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+}));
 
 // Health check with database status
 app.get('/health', async (req: Request, res: Response) => {
@@ -63,10 +74,10 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// Route registration placeholders
-// app.use('/api/auth', authRoutes);
+// Route registration
+app.use('/api/auth', authRoutes);
+app.use('/api/urls', urlRoutes);
 // app.use('/api/users', userRoutes);
-// app.use('/api/urls', urlRoutes);
 // app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler

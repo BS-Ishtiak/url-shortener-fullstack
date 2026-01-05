@@ -23,7 +23,7 @@ const pool = new Pool({
 
 // Log connection events
 pool.on('connect', () => {
-  console.log('📊 Database connected');
+  console.log('Database connected');
 });
 
 pool.on('error', (err) => {
