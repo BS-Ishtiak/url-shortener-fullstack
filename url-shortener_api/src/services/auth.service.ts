@@ -2,11 +2,7 @@ import pool from '../config/database';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateAccessToken, generateRefreshToken } from '../config/jwt';
 import { ValidationError, AuthError, ConflictError } from '../utils/errors';
-
-export interface AuthPayload {
-  email: string;
-  password: string;
-}
+import { AuthPayloadSchema, AuthPayload, validateData } from '../utils/validation';
 
 export interface AuthResponse {
   id: string;
@@ -16,17 +12,10 @@ export interface AuthResponse {
 }
 
 // Sign up new user
-export const signUp = async (payload: AuthPayload): Promise<AuthResponse> => {
-  const { email, password } = payload;
-
-  // Validate input
-  if (!email || !password) {
-    throw new ValidationError('Email and password are required');
-  }
-
-  if (password.length < 8) {
-    throw new ValidationError('Password must be at least 8 characters');
-  }
+export const signUp = async (payload: unknown): Promise<AuthResponse> => {
+  // Validate input with Zod
+  const validatedPayload = validateData<AuthPayload>(AuthPayloadSchema, payload);
+  const { email, password } = validatedPayload;
 
   // Check if user already exists
   const existingUser = await pool.query(
@@ -66,13 +55,10 @@ export const signUp = async (payload: AuthPayload): Promise<AuthResponse> => {
 };
 
 // Login user
-export const login = async (payload: AuthPayload): Promise<AuthResponse> => {
-  const { email, password } = payload;
-
-  // Validate input
-  if (!email || !password) {
-    throw new ValidationError('Email and password are required');
-  }
+export const login = async (payload: unknown): Promise<AuthResponse> => {
+  // Validate input with Zod
+  const validatedPayload = validateData<AuthPayload>(AuthPayloadSchema, payload);
+  const { email, password } = validatedPayload;
 
   // Find user
   const result = await pool.query('SELECT id, email, password FROM users WHERE email = $1', [

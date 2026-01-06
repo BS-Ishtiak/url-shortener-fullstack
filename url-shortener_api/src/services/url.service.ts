@@ -1,10 +1,7 @@
 import pool from '../config/database';
-import { generateShortCode, isValidUrl } from '../utils/shortCode';
+import { generateShortCode } from '../utils/shortCode';
 import { ValidationError, NotFoundError, ConflictError } from '../utils/errors';
-
-export interface CreateUrlPayload {
-  originalUrl: string;
-}
+import { CreateUrlPayloadSchema, CreateUrlPayload, validateData } from '../utils/validation';
 
 export interface UrlResponse {
   id: string;
@@ -18,17 +15,24 @@ export interface UrlResponse {
 // Create shortened URL
 export const createUrl = async (
   userId: string,
-  payload: CreateUrlPayload
+  payload: unknown
 ): Promise<UrlResponse> => {
-  const { originalUrl } = payload;
+  // Validate input with Zod
+  const validatedPayload = validateData<CreateUrlPayload>(CreateUrlPayloadSchema, payload);
+  const { originalUrl } = validatedPayload;
 
-  // Validate URL
-  if (!originalUrl) {
-    throw new ValidationError('Original URL is required');
-  }
+  // Check usage limit (100 URLs per user)
+  const countResult = await pool.query(
+    'SELECT COUNT(*) as count FROM urls WHERE user_id = $1',
+    [userId]
+  );
+  const urlCount = parseInt(countResult.rows[0].count, 10);
+  const URL_LIMIT = 100;
 
-  if (!isValidUrl(originalUrl)) {
-    throw new ValidationError('Invalid URL format');
+  if (urlCount >= URL_LIMIT) {
+    throw new ValidationError(
+      `URL limit reached. You have created ${urlCount} URLs. Free tier allows maximum ${URL_LIMIT} URLs. Please upgrade to create more.`
+    );
   }
 
   // Generate unique short code

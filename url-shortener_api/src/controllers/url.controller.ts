@@ -5,7 +5,6 @@ import {
   getUrlById,
   getUserUrls,
   deleteUrl,
-  CreateUrlPayload,
 } from '../services/url.service';
 import { logClick, getUrlAnalytics, getRecentVisits } from '../services/analytics.service';
 import { successResponse } from '../utils/response';
@@ -18,8 +17,7 @@ export const createUrlController = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id as string;
-    const payload: CreateUrlPayload = req.body;
-    const result = await createUrl(userId, payload);
+    const result = await createUrl(userId, req.body);
 
     res.status(201).json(successResponse('URL shortened successfully', result));
   } catch (error) {

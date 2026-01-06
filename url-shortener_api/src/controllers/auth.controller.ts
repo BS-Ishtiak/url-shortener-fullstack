@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { signUp, login, AuthPayload } from '../services/auth.service';
+import { signUp, login } from '../services/auth.service';
 import { successResponse } from '../utils/response';
+import { ValidationError } from '../utils/errors';
 
 // Sign up controller
 export const signUpController = async (
@@ -9,8 +10,7 @@ export const signUpController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const payload: AuthPayload = req.body;
-    const result = await signUp(payload);
+    const result = await signUp(req.body);
 
     res.status(201).json(
       successResponse('User created successfully', {
@@ -32,8 +32,7 @@ export const loginController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const payload: AuthPayload = req.body;
-    const result = await login(payload);
+    const result = await login(req.body);
 
     res.status(200).json(
       successResponse('Login successful', {
