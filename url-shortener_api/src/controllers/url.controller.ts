@@ -35,16 +35,21 @@ export const redirectUrlController = async (
     const { shortCode } = req.params;
     const urlData = await getUrlByShortCode(shortCode);
 
-    // Log analytics data
+    // Log analytics data with safe header access
     await logClick({
       urlId: urlData.id,
-      ipAddress: req.ip || req.socket.remoteAddress,
-      userAgent: req.headers['user-agent'],
-      referrer: req.headers['referer'] as string | undefined,
+      ipAddress: req.ip || (req.socket?.remoteAddress as string) || 'unknown',
+      userAgent: (req.headers && req.headers['user-agent']) || 'unknown',
+      referrer: (req.headers && req.headers['referer']) as string | undefined,
     });
 
-    // Redirect to original URL
-    res.redirect(301, urlData.originalUrl);
+    // Add protocol if missing and redirect to original URL
+    let redirectUrl = urlData.originalUrl;
+    if (!redirectUrl.startsWith('http://') && !redirectUrl.startsWith('https://')) {
+      redirectUrl = `https://${redirectUrl}`;
+    }
+
+    res.redirect(301, redirectUrl);
   } catch (error) {
     next(error);
   }

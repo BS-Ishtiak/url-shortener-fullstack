@@ -105,7 +105,7 @@ export default function DashboardPage() {
     try {
       await urlService.deleteUrl(urlToDelete, user.accessToken);
       setUrls(urls.filter((url) => url.id !== urlToDelete));
-      addToast('✅ URL deleted successfully', 'success');
+      addToast('URL deleted successfully', 'success');
 
       // Close modal after a brief delay to ensure toast is visible
       setTimeout(() => {
@@ -127,10 +127,15 @@ export default function DashboardPage() {
   const handleCopyShortUrl = async (shortUrl: string) => {
     const success = await copy(shortUrl);
     if (success) {
-      addToast('✅ Copied to clipboard!', 'success');
+      addToast('Short URL copied to clipboard!', 'success');
     } else {
       addToast('Failed to copy', 'error');
     }
+  };
+
+  const getShortUrlDisplay = (shortCode: string) => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    return `${baseUrl}/${shortCode}`;
   };
 
   const handleLogout = () => {
@@ -268,7 +273,11 @@ export default function DashboardPage() {
                           </a>
                         </td>
                         <td className="py-4 px-6">
-                          <code className="bg-slate-100 text-slate-800 px-3 py-1.5 rounded font-mono text-xs font-semibold">
+                          <code 
+                            className="bg-slate-100 text-slate-800 px-3 py-1.5 rounded font-mono text-xs font-semibold cursor-pointer hover:bg-slate-200 transition-colors" 
+                            onClick={() => handleCopyShortUrl(getShortUrlDisplay(url.shortCode))} 
+                            title={`Click to copy: ${getShortUrlDisplay(url.shortCode)}`}
+                          >
                             {url.shortCode}
                           </code>
                         </td>
@@ -285,9 +294,9 @@ export default function DashboardPage() {
                         <td className="py-4 px-6 text-center">
                           <div className="flex gap-2 justify-center">
                             <button
-                              onClick={() => handleCopyShortUrl(url.shortUrl)}
+                              onClick={() => handleCopyShortUrl(getShortUrlDisplay(url.shortCode))}
                               className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 p-2 rounded-lg transition-colors cursor-pointer"
-                              title="Copy URL"
+                              title="Copy short URL"
                             >
                               <Copy size={18} />
                             </button>

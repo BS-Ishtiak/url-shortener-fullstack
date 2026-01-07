@@ -34,7 +34,7 @@ function DashboardBackground() {
                 sx={{
                   height: 40,
                   width: 120,
-                  bgcolor: '#667eea',
+                  bgcolor: '#00b3a0',
                   borderRadius: 1,
                   color: 'white',
                 }}
@@ -61,7 +61,7 @@ function DashboardBackground() {
                 <tbody>
                   {[1, 2, 3].map((i) => (
                     <tr key={i} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#667eea' }}>https://example.com/very/long/url</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#00b3a0' }}>https://example.com/very/long/url</td>
                       <td style={{ padding: '12px 16px', fontSize: '14px', fontFamily: 'monospace' }}>abc{i}23</td>
                       <td style={{ padding: '12px 16px', fontSize: '14px' }}>42</td>
                       <td style={{ padding: '12px 16px', fontSize: '14px' }}>1/7/2026</td>
@@ -140,11 +140,11 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             {/* Header Section */}
             <Box sx={{ textAlign: 'center' }}>
               <Typography
-                variant="h3"
-                component="h1"
+                variant="h4"
+                component="h5"
                 sx={{
-                  fontWeight: 800,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #00b3a0 0%, #00796b 100%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -153,7 +153,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               >
                 {title}
               </Typography>
-              <Typography variant="body1" color="textSecondary">
+              <Typography variant="body1" color="primary">
                 {subtitle || (title === 'Sign In' ? 'Welcome back to URL Shortener' : 'Start shortening URLs today')}
               </Typography>
             </Box>

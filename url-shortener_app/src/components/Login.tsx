@@ -76,16 +76,16 @@ export default function LoginPage() {
               disabled={loading}
               InputProps={{
                 startAdornment: (
-                  <Mail size={20} style={{ marginRight: '12px', color: '#667eea' }} />
+                  <Mail size={20} style={{ marginRight: '12px', color: '#00b3a0' }} />
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '&:hover fieldset': {
-                    borderColor: '#667eea',
+                    borderColor: '#00b3a0',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#667eea',
+                    borderColor: '#00b3a0',
                   },
                 },
               }}
@@ -105,16 +105,16 @@ export default function LoginPage() {
               disabled={loading}
               InputProps={{
                 startAdornment: (
-                  <Lock size={20} style={{ marginRight: '12px', color: '#667eea' }} />
+                  <Lock size={20} style={{ marginRight: '12px', color: '#00b3a0' }} />
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '&:hover fieldset': {
-                    borderColor: '#667eea',
+                    borderColor: '#00b3a0',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#667eea',
+                    borderColor: '#00b3a0',
                   },
                 },
               }}
@@ -144,7 +144,7 @@ export default function LoginPage() {
               width: '100%',
               py: 1.5,
               px: 3,
-              backgroundColor: '#667eea',
+              backgroundColor: '#00b3a0',
               color: 'white',
               border: 'none',
               borderRadius: 1,
@@ -157,7 +157,7 @@ export default function LoginPage() {
               justifyContent: 'center',
               gap: 1,
               '&:hover': {
-                backgroundColor: '#764ba2',
+                backgroundColor: '#009d94',
               },
               '&:disabled': {
                 opacity: 0.6,
@@ -177,7 +177,7 @@ export default function LoginPage() {
           <Link
             href="/auth/signup"
             style={{
-              color: '#667eea',
+              color: '#00b3a0',
               fontWeight: 600,
               textDecoration: 'none',
             }}

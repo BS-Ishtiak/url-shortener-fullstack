@@ -97,16 +97,16 @@ export default function SignupPage() {
             disabled={loading}
             InputProps={{
               startAdornment: (
-                <Mail size={20} style={{ marginRight: '12px', color: '#667eea' }} />
+                <Mail size={20} style={{ marginRight: '12px', color: '#00b3a0' }} />
               ),
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
-                  borderColor: '#667eea',
+                  borderColor: '#00b3a0',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#667eea',
+                  borderColor: '#00b3a0',
                 },
               },
             }}
@@ -125,16 +125,16 @@ export default function SignupPage() {
               disabled={loading}
               InputProps={{
                 startAdornment: (
-                  <Lock size={20} style={{ marginRight: '12px', color: '#667eea' }} />
+                  <Lock size={20} style={{ marginRight: '12px', color: '#00796b' }} />
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '&:hover fieldset': {
-                    borderColor: '#667eea',
+                    borderColor: '#00b3a0',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#667eea',
+                    borderColor: '#00b3a0',
                   },
                 },
               }}
@@ -177,7 +177,7 @@ export default function SignupPage() {
             disabled={loading}
             InputProps={{
               startAdornment: (
-                <Lock size={20} style={{ marginRight: '12px', color: '#667eea' }} />
+                <Lock size={20} style={{ marginRight: '12px', color: '#00b3a0' }} />
               ),
               endAdornment:
                 password && confirmPassword && password === confirmPassword ? (
@@ -187,10 +187,10 @@ export default function SignupPage() {
             sx={{
               '& .MuiOutlinedInput-root': {
                 '&:hover fieldset': {
-                  borderColor: '#667eea',
+                  borderColor: '#00b3a0',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#667eea',
+                  borderColor: '#00b3a0',
                 },
               },
             }}
@@ -238,7 +238,7 @@ export default function SignupPage() {
               width: '100%',
               py: 1.5,
               px: 3,
-              backgroundColor: '#667eea',
+              backgroundColor: '#00b3a0',
               color: 'white',
               border: 'none',
               borderRadius: 1,
@@ -251,7 +251,7 @@ export default function SignupPage() {
               justifyContent: 'center',
               gap: 1,
               '&:hover': {
-                backgroundColor: '#764ba2',
+                backgroundColor: '#00796b',
               },
               '&:disabled': {
                 opacity: 0.6,
@@ -271,7 +271,7 @@ export default function SignupPage() {
           <Link
             href="/auth/login"
             style={{
-              color: '#667eea',
+              color: '#00b3a0',
               fontWeight: 600,
               textDecoration: 'none',
             }}

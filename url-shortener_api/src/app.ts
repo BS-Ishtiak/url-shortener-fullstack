@@ -80,6 +80,33 @@ app.use('/api/urls', urlRoutes);
 // app.use('/api/users', userRoutes);
 // app.use('/api/analytics', analyticsRoutes);
 
+// Root-level redirect handler - must come before 404
+// This allows short URLs like http://localhost:5000/LVDKY8
+app.get('/:shortCode', async (req: Request, res: Response, next) => {
+  // Skip if it's a known API path or special path
+  const { shortCode } = req.params;
+  
+  // Don't intercept special paths
+  if (['api', 'api-docs', 'health', 'favicon.ico'].includes(shortCode)) {
+    return next();
+  }
+
+  // Check if it looks like a short code (alphanumeric, 4+ chars typically)
+  if (!/^[a-zA-Z0-9]{4,}$/.test(shortCode)) {
+    return next();
+  }
+
+  try {
+    // Import the controller here to avoid circular dependencies
+    const { redirectUrlController } = await import('./controllers/url.controller');
+    
+    // Call the redirect controller directly with the proper request object
+    return redirectUrlController(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({
