@@ -145,6 +145,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout();
+    addToast('Logged out successfully!', 'success');
     router.push('/auth/login');
   };
 
@@ -195,7 +196,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               title="Logout"
             >
               <LogOut size={18} />
