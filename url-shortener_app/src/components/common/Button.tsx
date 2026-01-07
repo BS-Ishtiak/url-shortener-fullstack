@@ -19,7 +19,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+    'font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   const variantStyles = {
     primary: 'bg-blue-600 text-white hover:bg-blue-700',

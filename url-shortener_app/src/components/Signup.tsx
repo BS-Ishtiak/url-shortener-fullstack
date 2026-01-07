@@ -67,10 +67,8 @@ export default function SignupPage() {
       const response = await authService.signup({ email, password });
       const user = response.data;
 
-      login(user);
-
-      addToast('Account created successfully!', 'success');
-      router.push('/dashboard');
+      addToast('Account created successfully! Please login with your credentials.', 'success');
+      router.push('/auth/login');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Signup failed';
       addToast(errorMessage, 'error');

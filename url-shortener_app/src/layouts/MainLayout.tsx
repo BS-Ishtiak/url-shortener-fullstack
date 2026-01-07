@@ -128,37 +128,7 @@ export function MainLayout({ children }: LayoutProps) {
         {children}
       </Container>
 
-      {/* Footer */}
-      <Box
-        component="footer"
-        sx={{
-          backgroundColor: '#f9fafb',
-          borderTop: '1px solid #e5e7eb',
-          py: 4,
-          mt: 'auto',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-              &copy; 2026 URL Shortener. All rights reserved.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Link href="#" style={{ color: '#667eea', textDecoration: 'none', fontSize: '0.875rem' }}>
-                Privacy Policy
-              </Link>
-              <span style={{ color: '#d1d5db' }}>•</span>
-              <Link href="#" style={{ color: '#667eea', textDecoration: 'none', fontSize: '0.875rem' }}>
-                Terms of Service
-              </Link>
-              <span style={{ color: '#d1d5db' }}>•</span>
-              <Link href="#" style={{ color: '#667eea', textDecoration: 'none', fontSize: '0.875rem' }}>
-                Contact
-              </Link>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+
     </Box>
   );
 }

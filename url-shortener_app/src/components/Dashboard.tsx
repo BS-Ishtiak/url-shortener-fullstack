@@ -1,22 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Copy, Trash2, RefreshCw } from 'lucide-react';
+import { Copy, Trash2, LogOut, Link2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuthGuard } from '@/hooks';
-import { MainLayout } from '@/layouts';
 import { Input, Button, LoadingSpinner, ConfirmationModal } from '@/components/common';
 import { useToast } from '@/context/ToastContext';
 import urlService from '@/services/url.service';
 import { useCopyToClipboard } from '@/hooks';
 import { ShortenedUrl } from '@/types';
+import { useRouter } from 'next/navigation';
+
+const LINK_LIMIT = 100;
 
 export default function DashboardPage() {
   useAuthGuard();
 
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const { addToast } = useToast();
   const { copy } = useCopyToClipboard();
+  const router = useRouter();
 
   const [originalUrl, setOriginalUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,19 +29,11 @@ export default function DashboardPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [urlToDelete, setUrlToDelete] = useState<string | null>(null);
-  const [refreshLoading, setRefreshLoading] = useState(false);
 
   // Fetch URLs on mount and when auth is ready
   React.useEffect(() => {
     if (!isLoading && user?.accessToken) {
       loadUrls();
-      
-      // Auto-refresh every 30 seconds to show updated click counts
-      const interval = setInterval(() => {
-        loadUrls();
-      }, 30000);
-      
-      return () => clearInterval(interval);
     } else if (!isLoading && !user?.accessToken) {
       setFetchingUrls(false);
     }
@@ -74,6 +69,11 @@ export default function DashboardPage() {
       return;
     }
 
+    if (urls.length >= LINK_LIMIT) {
+      addToast('Link limit reached. Upgrade to create more links.', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await urlService.createUrl(
@@ -106,7 +106,7 @@ export default function DashboardPage() {
       await urlService.deleteUrl(urlToDelete, user.accessToken);
       setUrls(urls.filter((url) => url.id !== urlToDelete));
       addToast('✅ URL deleted successfully', 'success');
-      
+
       // Close modal after a brief delay to ensure toast is visible
       setTimeout(() => {
         setDeleteModalOpen(false);
@@ -124,26 +124,6 @@ export default function DashboardPage() {
     setUrlToDelete(null);
   };
 
-  const handleRefresh = async () => {
-    setRefreshLoading(true);
-    await loadUrls();
-    setRefreshLoading(false);
-    addToast('✅ Data refreshed', 'success');
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!user?.accessToken) return;
-
-    try {
-      await urlService.deleteUrl(id, user.accessToken);
-      setUrls(urls.filter((url) => url.id !== id));
-      addToast('URL deleted successfully', 'success');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete URL';
-      addToast(errorMessage, 'error');
-    }
-  };
-
   const handleCopyShortUrl = async (shortUrl: string) => {
     const success = await copy(shortUrl);
     if (success) {
@@ -153,147 +133,195 @@ export default function DashboardPage() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
+
+  const limitPercentage = (urls.length / LINK_LIMIT) * 100;
+  const limitReached = urls.length >= LINK_LIMIT;
+
   return (
-    <MainLayout>
-      <div className="space-y-8">
-        {/* Create URL Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-6">Create Shortened URL</h2>
-
-          <form onSubmit={handleCreateUrl} className="space-y-4">
-            <Input
-              type="url"
-              placeholder="Enter your long URL (e.g., https://example.com/very/long/url)"
-              value={originalUrl}
-              onChange={(e) => setOriginalUrl(e.target.value)}
-              disabled={loading}
-            />
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              loading={loading}
-              disabled={loading}
-            >
-              Shorten URL
-            </Button>
-          </form>
-        </div>
-
-        {/* URLs List Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-8 border-b border-gray-100">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg">📊</div>
-                <h2 className="text-2xl font-bold text-gray-900">Your Shortened URLs</h2>
-                {urls.length > 0 && (
-                  <span className="ml-auto bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">
-                    {urls.length} URL{urls.length !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={handleRefresh}
-                disabled={refreshLoading}
-                className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-lg transition-colors disabled:opacity-50"
-                title="Refresh data"
-              >
-                <RefreshCw size={20} className={refreshLoading ? 'animate-spin' : ''} />
-              </button>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
+              <Link2 size={24} className="text-white" />
             </div>
+            <h1 className="text-2xl font-bold text-slate-900">URLShort</h1>
           </div>
 
-          {fetchingUrls ? (
-            <LoadingSpinner />
-          ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-              {error}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm font-medium text-slate-900">{user?.email}</p>
+              <p className="text-xs text-slate-500">Free Plan</p>
             </div>
-          ) : urls.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">
-              No shortened URLs yet. Create one above to get started!
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-400">
-                <thead>
-                  <tr className="bg-gray-50 border-b-2 border-gray-400">
-                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Original URL</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Short Code</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Clicks</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Created</th>
-                    <th className="text-center py-4 px-6 font-semibold text-gray-700 text-sm">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {urls.map((url, index) => (
-                    <tr key={url.id} className={`border-b border-gray-300 transition-colors ${index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-indigo-50 hover:bg-indigo-100'}`}>
-                      <td className="py-4 px-6 border-r border-gray-400">
-                        <a
-                          href={url.originalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-700 hover:underline truncate block max-w-xs font-medium text-sm"
-                          title={url.originalUrl}
-                        >
-                          {url.originalUrl}
-                        </a>
-                      </td>
-                      <td className="py-4 px-6 border-r border-gray-400">
-                        <code className="bg-gray-100 text-gray-800 px-3 py-1 rounded font-mono text-sm font-semibold">
-                          {url.shortCode}
-                        </code>
-                      </td>
-                      <td className="py-4 px-6 border-r border-gray-400">
-                        <span className="text-gray-900 font-semibold">{url.clicks}</span>
-                      </td>
-                      <td className="py-4 px-6 text-gray-600 text-sm border-r border-gray-400">
-                        {new Date(url.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex gap-3 justify-center">
-                          <button
-                            onClick={() => handleCopyShortUrl(url.shortUrl)}
-                            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
-                            title="Copy URL"
-                          >
-                            <Copy size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(url.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                            title="Delete URL"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
+      </header>
 
-        {/* Delete Confirmation Modal */}
-        <ConfirmationModal
-          open={deleteModalOpen}
-          title="Delete URL"
-          message="Are you sure you want to delete this shortened URL? This action cannot be undone."
-          confirmText="Delete"
-          cancelText="Cancel"
-          loading={deleteLoading}
-          isDangerous
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-        />
-      </div>
-    </MainLayout>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="space-y-6">
+          {/* Usage Indicator */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-slate-900">Links Used</h2>
+              <span className="text-sm font-medium text-slate-600">{urls.length} of {LINK_LIMIT}</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  limitPercentage >= 90
+                    ? 'bg-red-500'
+                    : limitPercentage >= 70
+                    ? 'bg-yellow-500'
+                    : 'bg-teal-500'
+                }`}
+                style={{ width: `${Math.min(limitPercentage, 100)}%` }}
+              />
+            </div>
+            {limitReached && (
+              <p className="text-xs text-red-600 mt-3 font-medium">
+                Free tier limit reached. Upgrade for unlimited links.
+              </p>
+            )}
+          </div>
+
+          {/* URL Form */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <form onSubmit={handleCreateUrl} className="flex gap-3">
+              <Input
+                type="url"
+                placeholder="Enter your long URL (e.g., https://example.com/very/long/url)"
+                value={originalUrl}
+                onChange={(e) => setOriginalUrl(e.target.value)}
+                disabled={loading || limitReached}
+                className="flex-1"
+              />
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                loading={loading}
+                disabled={loading || limitReached}
+              >
+                Shorten
+              </Button>
+            </form>
+          </div>
+
+          {/* URL Table */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            {fetchingUrls ? (
+              <div className="p-12 flex justify-center">
+                <LoadingSpinner />
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 border-t border-red-200 p-6 text-red-700 text-sm font-medium">
+                {error}
+              </div>
+            ) : urls.length === 0 ? (
+              <div className="p-12 text-center">
+                <Link2 size={48} className="text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-600 font-medium">No shortened URLs yet</p>
+                <p className="text-slate-500 text-sm mt-1">Create one above to get started</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <th className="text-left py-4 px-6 font-semibold text-slate-900 text-sm">Original URL</th>
+                      <th className="text-left py-4 px-6 font-semibold text-slate-900 text-sm">Short Code</th>
+                      <th className="text-center py-4 px-6 font-semibold text-slate-900 text-sm">Clicks</th>
+                      <th className="text-center py-4 px-6 font-semibold text-slate-900 text-sm">Date</th>
+                      <th className="text-center py-4 px-6 font-semibold text-slate-900 text-sm">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {urls.map((url, index) => (
+                      <tr
+                        key={url.id}
+                        className={`border-b border-slate-200 transition-colors ${
+                          index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'
+                        }`}
+                      >
+                        <td className="py-4 px-6">
+                          <a
+                            href={url.originalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-teal-600 hover:text-teal-700 truncate block max-w-xs font-medium text-sm"
+                            title={url.originalUrl}
+                          >
+                            {url.originalUrl}
+                          </a>
+                        </td>
+                        <td className="py-4 px-6">
+                          <code className="bg-slate-100 text-slate-800 px-3 py-1.5 rounded font-mono text-xs font-semibold">
+                            {url.shortCode}
+                          </code>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <span className="text-slate-900 font-semibold">{url.clicks}</span>
+                        </td>
+                        <td className="py-4 px-6 text-center text-slate-600 text-sm">
+                          {new Date(url.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              onClick={() => handleCopyShortUrl(url.shortUrl)}
+                              className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 p-2 rounded-lg transition-colors cursor-pointer"
+                              title="Copy URL"
+                            >
+                              <Copy size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(url.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors cursor-pointer"
+                              title="Delete URL"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        open={deleteModalOpen}
+        title="Delete URL"
+        message="Are you sure you want to delete this shortened URL? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={deleteLoading}
+        isDangerous
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+    </div>
   );
 }
