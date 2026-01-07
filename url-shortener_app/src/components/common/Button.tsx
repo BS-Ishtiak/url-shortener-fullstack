@@ -22,7 +22,7 @@ export function Button({
     'font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   const variantStyles = {
-    primary: 'bg-[#00b3a0] text-white hover:bg-blue-700',
+    primary: 'bg-[#00b3a0] text-white hover:bg-[#008f85]',
     secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
     danger: 'bg-red-600 text-white hover:bg-red-700',
     outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',

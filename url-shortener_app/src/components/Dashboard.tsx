@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Copy, Trash2, LogOut, Link2 } from 'lucide-react';
+import { Copy, Trash2, LogOut, Link2, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuthGuard } from '@/hooks';
 import { Input, Button, LoadingSpinner, ConfirmationModal } from '@/components/common';
@@ -29,6 +29,9 @@ export default function DashboardPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [urlToDelete, setUrlToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch URLs on mount and when auth is ready
   React.useEffect(() => {
@@ -84,6 +87,7 @@ export default function DashboardPage() {
       const newUrl = response.data;
       setUrls([newUrl, ...urls]);
       setOriginalUrl('');
+      setCurrentPage(1);
       addToast('URL shortened successfully!', 'success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create URL';
@@ -111,6 +115,7 @@ export default function DashboardPage() {
       setTimeout(() => {
         setDeleteModalOpen(false);
         setUrlToDelete(null);
+        setDeleteLoading(false);
       }, 300);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete URL';
@@ -146,6 +151,31 @@ export default function DashboardPage() {
   const limitPercentage = (urls.length / LINK_LIMIT) * 100;
   const limitReached = urls.length >= LINK_LIMIT;
 
+  // Filter URLs based on search term
+  const filteredUrls = urls.filter((url) =>
+    url.originalUrl.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUrls.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUrls = filteredUrls.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(parseInt(e.target.value, 10));
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -161,7 +191,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-medium text-slate-900">{user?.email}</p>
-              <p className="text-xs text-slate-500">Free Plan</p>
+              
             </div>
             <button
               onClick={handleLogout}
@@ -222,7 +252,43 @@ export default function DashboardPage() {
               >
                 Shorten
               </Button>
+              <button
+                onClick={loadUrls}
+                disabled={fetchingUrls}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
+                title="Refresh URLs"
+              >
+                <RefreshCw size={18} className={fetchingUrls ? 'animate-spin' : ''} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
             </form>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Search by original URL..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="w-full pr-12"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Clear search"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <p className="text-sm text-slate-600 mt-3">
+                Found <span className="font-semibold text-slate-900">{filteredUrls.length}</span> URL(s) matching your search
+              </p>
+            )}
           </div>
 
           {/* URL Table */}
@@ -254,7 +320,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {urls.map((url, index) => (
+                    {paginatedUrls.map((url, index) => (
                       <tr
                         key={url.id}
                         className={`border-b border-slate-200 transition-colors ${
@@ -313,6 +379,69 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+
+                {/* Pagination Footer */}
+                <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      {/* Left: Rows per page */}
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="itemsPerPage" className="text-sm font-medium text-slate-700">
+                          Rows per page:
+                        </label>
+                        <select
+                          id="itemsPerPage"
+                          value={itemsPerPage}
+                          onChange={handleItemsPerPageChange}
+                          className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                        >
+                          <option value={5}>5</option>
+                          <option value={10}>10</option>
+                          <option value={25}>25</option>
+                          <option value={50}>50</option>
+                        </select>
+                      </div>
+
+                      {/* Center: Info text */}
+                      <div className="text-sm text-slate-600 font-medium">
+                        Showing {filteredUrls.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredUrls.length)} of {filteredUrls.length} URLs
+                      </div>
+
+                      {/* Right: Pagination buttons */}
+                      <div className="flex gap-2 items-center">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Prev
+                        </button>
+
+                        <div className="flex gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                                currentPage === page
+                                  ? 'bg-teal-500 text-white'
+                                  : 'border border-slate-200 text-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </div>
               </div>
             )}
           </div>
