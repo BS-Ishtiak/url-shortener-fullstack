@@ -26,7 +26,7 @@ export default function DashboardHeader({ userEmail, onLogout }: DashboardHeader
           </div>
           <button
             onClick={onLogout}
-            className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="Logout"
           >
             <LogOut size={18} />
