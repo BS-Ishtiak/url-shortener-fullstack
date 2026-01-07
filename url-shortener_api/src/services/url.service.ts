@@ -70,12 +70,12 @@ export const createUrl = async (
     shortCode: url.short_code,
     clicks: url.clicks,
     createdAt: url.created_at,
-    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/api/urls/${url.short_code}`,
+    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/${url.short_code}`,
   };
 };
 
 // Get URL by short code and increment clicks
-export const getUrlByShortCode = async (shortCode: string): Promise<UrlResponse> => {
+export const getUrlByShortCode = async (shortCode: string) => {
   const result = await pool.query(
     'SELECT id, original_url, short_code, clicks, created_at, user_id FROM urls WHERE short_code = $1',
     [shortCode]
@@ -92,11 +92,12 @@ export const getUrlByShortCode = async (shortCode: string): Promise<UrlResponse>
 
   return {
     id: url.id,
+    userId: url.user_id,
     originalUrl: url.original_url,
     shortCode: url.short_code,
     clicks: url.clicks + 1,
     createdAt: url.created_at,
-    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/api/urls/${url.short_code}`,
+    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/${url.short_code}`,
   };
 };
 
@@ -119,7 +120,7 @@ export const getUrlById = async (id: string, userId: string): Promise<UrlRespons
     shortCode: url.short_code,
     clicks: url.clicks,
     createdAt: url.created_at,
-    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/api/urls/${url.short_code}`,
+    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/${url.short_code}`,
   };
 };
 
@@ -136,7 +137,7 @@ export const getUserUrls = async (userId: string) => {
     shortCode: url.short_code,
     clicks: url.clicks,
     createdAt: url.created_at,
-    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/api/urls/${url.short_code}`,
+    shortUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/${url.short_code}`,
   }));
 };
 

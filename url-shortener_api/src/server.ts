@@ -1,5 +1,7 @@
+import http from 'http';
 import app from './app';
 import { initializeDatabase, closeDatabase } from './utils/database';
+import { initializeWebSocket } from './utils/websocket';
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -9,7 +11,13 @@ const startServer = async () => {
     // Initialize database
     await initializeDatabase();
 
-    const server = app.listen(PORT, () => {
+    // Create HTTP server for Socket.io support
+    const httpServer = http.createServer(app);
+    
+    // Initialize WebSocket
+    initializeWebSocket(httpServer);
+
+    httpServer.listen(PORT, () => {
       console.log(
         `\n✅ Server is running on http://${HOST}:${PORT}`
       );
@@ -19,7 +27,7 @@ const startServer = async () => {
     // Graceful shutdown handlers
     process.on('SIGTERM', () => {
       console.log('SIGTERM signal received: closing HTTP server');
-      server.close(async () => {
+      httpServer.close(async () => {
         await closeDatabase();
         console.log('HTTP server closed');
         process.exit(0);
@@ -28,7 +36,7 @@ const startServer = async () => {
 
     process.on('SIGINT', () => {
       console.log('SIGINT signal received: closing HTTP server');
-      server.close(async () => {
+      httpServer.close(async () => {
         await closeDatabase();
         console.log('HTTP server closed');
         process.exit(0);

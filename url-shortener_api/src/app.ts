@@ -17,7 +17,7 @@ app.use(requestIdMiddleware);
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGINS?.split(',') || 'http://localhost:3000',
+  origin: process.env.CORS_ORIGINS?.split(',') || 'http://localhost:3000', 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -74,14 +74,33 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// Route registration
 app.use('/api/auth', authRoutes);
 app.use('/api/urls', urlRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/analytics', analyticsRoutes);
 
-// Root-level redirect handler - must come before 404
-// This allows short URLs like http://localhost:5000/LVDKY8
+/**
+ * @swagger
+ * /{shortCode}:
+ *   get:
+ *     summary: Redirect to original URL using short code
+ *     description: Redirects to the original long URL associated with the short code. Public endpoint, no authentication required.
+ *     tags: [URLs]
+ *     parameters:
+ *       - in: path
+ *         name: shortCode
+ *         required: true
+ *         description: The short code for the URL (alphanumeric, typically 4+ characters)
+ *         schema:
+ *           type: string
+ *           pattern: '^[a-zA-Z0-9]{4,}$'
+ *           example: 'LVDKY8'
+ *     responses:
+ *       301:
+ *         description: Permanent redirect to the original URL
+ *       404:
+ *         description: Short code not found
+ *       400:
+ *         description: Invalid short code format
+ */
 app.get('/:shortCode', async (req: Request, res: Response, next) => {
   // Skip if it's a known API path or special path
   const { shortCode } = req.params;

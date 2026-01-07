@@ -8,6 +8,7 @@ import {
 } from '../services/url.service';
 import { logClick, getUrlAnalytics, getRecentVisits } from '../services/analytics.service';
 import { successResponse } from '../utils/response';
+import { emitClickUpdate } from '../utils/websocket';
 
 // Create shortened URL
 export const createUrlController = async (
@@ -42,6 +43,11 @@ export const redirectUrlController = async (
       userAgent: (req.headers && req.headers['user-agent']) || 'unknown',
       referrer: (req.headers && req.headers['referer']) as string | undefined,
     });
+
+    // Emit real-time click update to the user's dashboard
+    if (urlData.userId) {
+      emitClickUpdate(urlData.userId, urlData.id, urlData.clicks);
+    }
 
     // Add protocol if missing and redirect to original URL
     let redirectUrl = urlData.originalUrl;

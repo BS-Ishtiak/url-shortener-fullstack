@@ -50,24 +50,6 @@ const router = Router();
  */
 router.post('/', authMiddleware, createUrlController);
 
-/**
- * @swagger
- * /api/urls/{shortCode}:
- *   get:
- *     summary: Redirect to original URL
- *     tags: [URLs]
- *     parameters:
- *       - in: path
- *         name: shortCode
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       301:
- *         description: Redirect to original URL
- *       404:
- *         description: URL not found
- */
 router.get('/:shortCode', redirectUrlController);
 
 /**

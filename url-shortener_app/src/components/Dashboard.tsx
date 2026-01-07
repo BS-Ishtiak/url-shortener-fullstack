@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Copy, Trash2, LogOut, Link2, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useAuthGuard } from '@/hooks';
+import { useAuthGuard, useSocket } from '@/hooks';
 import { Input, Button, LoadingSpinner, ConfirmationModal } from '@/components/common';
 import { useToast } from '@/context/ToastContext';
 import urlService from '@/services/url.service';
@@ -20,6 +20,9 @@ export default function DashboardPage() {
   const { addToast } = useToast();
   const { copy } = useCopyToClipboard();
   const router = useRouter();
+  
+  // Initialize Socket.io connection for real-time updates
+  const { onUrlClicked } = useSocket({ userId: user?.id || null, enabled: !!user?.id });
 
   const [originalUrl, setOriginalUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,6 +44,20 @@ export default function DashboardPage() {
       setFetchingUrls(false);
     }
   }, [isLoading, user?.accessToken]);
+
+  // Listen for real-time click updates
+  React.useEffect(() => {
+    const unsubscribe = onUrlClicked((data: { urlId: string; clicks: number; timestamp: string }) => {
+      setUrls((prevUrls) =>
+        prevUrls.map((url) =>
+          url.id === data.urlId ? { ...url, clicks: data.clicks } : url
+        )
+      );
+      addToast(`URL "${data.urlId.slice(0, 8)}" was clicked! (${data.clicks} total)`, 'info');
+    });
+
+    return unsubscribe;
+  }, [onUrlClicked, addToast]);
 
   const loadUrls = async () => {
     if (!user?.accessToken) return;
