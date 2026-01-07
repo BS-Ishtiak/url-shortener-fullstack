@@ -67,7 +67,6 @@ export default function SignupPage() {
       const response = await authService.signup({ email, password });
       const user = response.data;
 
-      authService.setTokens(user);
       login(user);
 
       addToast('Account created successfully!', 'success');

@@ -47,7 +47,6 @@ export default function LoginPage() {
       const response = await authService.login({ email, password });
       const user = response.data;
 
-      authService.setTokens(user);
       login(user);
 
       addToast('Login successful!', 'success');

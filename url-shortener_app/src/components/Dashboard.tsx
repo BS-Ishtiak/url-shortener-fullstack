@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Copy, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAuthGuard } from '@/hooks';
 import { MainLayout } from '@/layouts';
-import { Input, Button, LoadingSpinner } from '@/components/common';
+import { Input, Button, LoadingSpinner, ConfirmationModal } from '@/components/common';
 import { useToast } from '@/context/ToastContext';
 import urlService from '@/services/url.service';
 import { useCopyToClipboard } from '@/hooks';
@@ -13,7 +14,7 @@ import { ShortenedUrl } from '@/types';
 export default function DashboardPage() {
   useAuthGuard();
 
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { addToast } = useToast();
   const { copy } = useCopyToClipboard();
 
@@ -22,13 +23,26 @@ export default function DashboardPage() {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [fetchingUrls, setFetchingUrls] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [urlToDelete, setUrlToDelete] = useState<string | null>(null);
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
-  // Fetch URLs on mount
+  // Fetch URLs on mount and when auth is ready
   React.useEffect(() => {
-    if (user?.accessToken) {
+    if (!isLoading && user?.accessToken) {
       loadUrls();
+      
+      // Auto-refresh every 30 seconds to show updated click counts
+      const interval = setInterval(() => {
+        loadUrls();
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    } else if (!isLoading && !user?.accessToken) {
+      setFetchingUrls(false);
     }
-  }, [user?.accessToken]);
+  }, [isLoading, user?.accessToken]);
 
   const loadUrls = async () => {
     if (!user?.accessToken) return;
@@ -79,6 +93,44 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteClick = (id: string) => {
+    setUrlToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!urlToDelete || !user?.accessToken) return;
+
+    setDeleteLoading(true);
+    try {
+      await urlService.deleteUrl(urlToDelete, user.accessToken);
+      setUrls(urls.filter((url) => url.id !== urlToDelete));
+      addToast('✅ URL deleted successfully', 'success');
+      
+      // Close modal after a brief delay to ensure toast is visible
+      setTimeout(() => {
+        setDeleteModalOpen(false);
+        setUrlToDelete(null);
+      }, 300);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete URL';
+      addToast(errorMessage, 'error');
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setUrlToDelete(null);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshLoading(true);
+    await loadUrls();
+    setRefreshLoading(false);
+    addToast('✅ Data refreshed', 'success');
+  };
+
   const handleDelete = async (id: string) => {
     if (!user?.accessToken) return;
 
@@ -95,7 +147,7 @@ export default function DashboardPage() {
   const handleCopyShortUrl = async (shortUrl: string) => {
     const success = await copy(shortUrl);
     if (success) {
-      addToast('Copied to clipboard!', 'success');
+      addToast('✅ Copied to clipboard!', 'success');
     } else {
       addToast('Failed to copy', 'error');
     }
@@ -129,8 +181,28 @@ export default function DashboardPage() {
         </div>
 
         {/* URLs List Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-6">Your Shortened URLs</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-8 border-b border-gray-100">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg">📊</div>
+                <h2 className="text-2xl font-bold text-gray-900">Your Shortened URLs</h2>
+                {urls.length > 0 && (
+                  <span className="ml-auto bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">
+                    {urls.length} URL{urls.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshLoading}
+                className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh data"
+              >
+                <RefreshCw size={20} className={refreshLoading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          </div>
 
           {fetchingUrls ? (
             <LoadingSpinner />
@@ -144,50 +216,62 @@ export default function DashboardPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full border-collapse border border-gray-400">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4">Original URL</th>
-                    <th className="text-left py-3 px-4">Short Code</th>
-                    <th className="text-left py-3 px-4">Clicks</th>
-                    <th className="text-left py-3 px-4">Created</th>
-                    <th className="text-center py-3 px-4">Actions</th>
+                  <tr className="bg-gray-50 border-b-2 border-gray-400">
+                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Original URL</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Short Code</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Clicks</th>
+                    <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm border-r border-gray-400">Created</th>
+                    <th className="text-center py-4 px-6 font-semibold text-gray-700 text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {urls.map((url) => (
-                    <tr key={url.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
+                  {urls.map((url, index) => (
+                    <tr key={url.id} className={`border-b border-gray-300 transition-colors ${index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-indigo-50 hover:bg-indigo-100'}`}>
+                      <td className="py-4 px-6 border-r border-gray-400">
                         <a
                           href={url.originalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline truncate block max-w-xs"
+                          className="text-indigo-600 hover:text-indigo-700 hover:underline truncate block max-w-xs font-medium text-sm"
                           title={url.originalUrl}
                         >
                           {url.originalUrl}
                         </a>
                       </td>
-                      <td className="py-3 px-4 font-mono text-sm">{url.shortCode}</td>
-                      <td className="py-3 px-4">{url.clicks}</td>
-                      <td className="py-3 px-4 text-sm">
-                        {new Date(url.createdAt).toLocaleDateString()}
+                      <td className="py-4 px-6 border-r border-gray-400">
+                        <code className="bg-gray-100 text-gray-800 px-3 py-1 rounded font-mono text-sm font-semibold">
+                          {url.shortCode}
+                        </code>
                       </td>
-                      <td className="py-3 px-4 text-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopyShortUrl(url.shortUrl)}
-                        >
-                          Copy
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(url.id)}
-                        >
-                          Delete
-                        </Button>
+                      <td className="py-4 px-6 border-r border-gray-400">
+                        <span className="text-gray-900 font-semibold">{url.clicks}</span>
+                      </td>
+                      <td className="py-4 px-6 text-gray-600 text-sm border-r border-gray-400">
+                        {new Date(url.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <div className="flex gap-3 justify-center">
+                          <button
+                            onClick={() => handleCopyShortUrl(url.shortUrl)}
+                            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                            title="Copy URL"
+                          >
+                            <Copy size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(url.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                            title="Delete URL"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -196,6 +280,19 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          open={deleteModalOpen}
+          title="Delete URL"
+          message="Are you sure you want to delete this shortened URL? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          loading={deleteLoading}
+          isDangerous
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
       </div>
     </MainLayout>
   );
