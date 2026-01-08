@@ -48,6 +48,8 @@ export default function DashboardPage() {
 
   // Listen for real-time click updates
   React.useEffect(() => {
+    if (!user?.id) return;
+
     const unsubscribe = onUrlClicked((data: { urlId: string; clicks: number; timestamp: string }) => {
       setUrls((prevUrls) =>
         prevUrls.map((url) =>
@@ -58,7 +60,7 @@ export default function DashboardPage() {
     });
 
     return unsubscribe;
-  }, [onUrlClicked, addToast]);
+  }, []);
 
   const loadUrls = async () => {
     if (!user?.accessToken) return;

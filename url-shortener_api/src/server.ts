@@ -19,9 +19,9 @@ const startServer = async () => {
 
     httpServer.listen(PORT, () => {
       console.log(
-        `\n✅ Server is running on http://${HOST}:${PORT}`
+        `\nServer is running on http://${HOST}:${PORT}`
       );
-      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
     });
 
     // Graceful shutdown handlers

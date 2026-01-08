@@ -1,6 +1,5 @@
 import pool from "../config/database";
 
-// Create users table
 export const createUsersTable = async (): Promise<void> => {
   const query = `
     CREATE TABLE IF NOT EXISTS users (
@@ -15,10 +14,8 @@ export const createUsersTable = async (): Promise<void> => {
   `;
 
   await pool.query(query);
-  console.log("Users table created");
 };
 
-// Create urls table
 export const createUrlsTable = async (): Promise<void> => {
   const query = `
     CREATE TABLE IF NOT EXISTS urls (
@@ -36,10 +33,8 @@ export const createUrlsTable = async (): Promise<void> => {
   `;
 
   await pool.query(query);
-  console.log("URLs table created");
 };
 
-// Create analytics table
 export const createAnalyticsTable = async (): Promise<void> => {
   const query = `
     CREATE TABLE IF NOT EXISTS analytics (
@@ -56,10 +51,8 @@ export const createAnalyticsTable = async (): Promise<void> => {
   `;
 
   await pool.query(query);
-  console.log("Analytics table created");
 };
 
-// Run all migrations
 export const runMigrations = async (): Promise<void> => {
   try {
     console.log("Running migrations...");

@@ -8,10 +8,14 @@ interface UseSocketOptions {
 
 export const useSocket = ({ userId, enabled = true }: UseSocketOptions) => {
   const socketRef = useRef<Socket | null>(null);
+  const listenersSetupRef = useRef<boolean>(false);
 
   // Initialize socket connection
   useEffect(() => {
-    if (!enabled || !userId) return;
+    if (!enabled || !userId) {
+      console.log('⏸️ Socket initialization skipped - enabled:', enabled, 'userId:', userId);
+      return;
+    }
 
     // Connect to the server
     const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', {
@@ -24,37 +28,47 @@ export const useSocket = ({ userId, enabled = true }: UseSocketOptions) => {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      console.log('Socket connected');
-      // Join the user's room for real-time updates
+    
       socket.emit('join-user-room', userId);
+      
     });
 
     socket.on('disconnect', () => {
       console.log('Socket disconnected');
+      listenersSetupRef.current = false;
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      console.error('⚠️ Socket connection error:', error);
     });
 
     return () => {
+      
       if (socket) {
         socket.emit('leave-user-room', userId);
         socket.disconnect();
       }
+      listenersSetupRef.current = false;
     };
   }, [userId, enabled]);
 
-  // Method to listen for click updates
+  // Method to listen for click updates - set up listener only once
   const onUrlClicked = useCallback(
     (callback: (data: { urlId: string; clicks: number; timestamp: string }) => void) => {
-      if (socketRef.current) {
-        socketRef.current.on('url-clicked', callback);
+      if (socketRef.current && !listenersSetupRef.current) {
+        console.log('👂 Setting up url-clicked listener');
+        listenersSetupRef.current = true;
+        
+        socketRef.current.on('url-clicked', (data) => {
+          callback(data);
+        });
       }
 
       return () => {
+        
         if (socketRef.current) {
-          socketRef.current.off('url-clicked', callback);
+          socketRef.current.off('url-clicked');
+          listenersSetupRef.current = false;
         }
       };
     },
