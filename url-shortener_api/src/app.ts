@@ -12,10 +12,9 @@ import urlRoutes from './routes/url.routes';
 
 const app: Application = express();
 
-// Request ID middleware
+
 app.use(requestIdMiddleware);
 
-// CORS configuration
 const corsOptions = {
   origin: process.env.CORS_ORIGINS?.split(',') || 'http://localhost:3000', 
   credentials: true,
@@ -25,22 +24,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// Body parser with size limits
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
-
-// Security headers
 app.use(securityMiddleware);
 
-// Swagger documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  swaggerOptions: {
-    persistAuthorization: true,
-  },
-}));
-
-// Health check with database status
+// Health check endpoint
 app.get('/health', async (req: Request, res: Response) => {
   try {
     const dbHealth = await dbHealthCheck();
@@ -59,7 +47,7 @@ app.get('/health', async (req: Request, res: Response) => {
   }
 });
 
-// API info
+// API info endpoint
 app.get('/api', (req: Request, res: Response) => {
   res.status(200).json({
     name: 'URL Shortener API',
@@ -74,8 +62,17 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+}));
+
+// Protected API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/urls', urlRoutes);
+
 
 /**
  * @swagger
@@ -102,31 +99,27 @@ app.use('/api/urls', urlRoutes);
  *         description: Invalid short code format
  */
 app.get('/:shortCode', async (req: Request, res: Response, next) => {
-  // Skip if it's a known API path or special path
   const { shortCode } = req.params;
   
-  // Don't intercept special paths
+  // Skip if it's a reserved route
   if (['api', 'api-docs', 'health', 'favicon.ico'].includes(shortCode)) {
     return next();
   }
 
-  // Check if it looks like a short code (alphanumeric, 4+ chars typically)
+  // Validate short code format
   if (!/^[a-zA-Z0-9]{4,}$/.test(shortCode)) {
     return next();
   }
 
   try {
-    // Import the controller here to avoid circular dependencies
     const { redirectUrlController } = await import('./controllers/url.controller');
-    
-    // Call the redirect controller directly with the proper request object
     return redirectUrlController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
 
-// 404 handler
+// 404 handler - MUST be last
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Not Found',
@@ -135,7 +128,7 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Global error handler (must be last)
+// Global error handler
 app.use(errorHandler);
 
 export default app;

@@ -48,9 +48,15 @@ export default function DashboardPage() {
 
   // Listen for real-time click updates
   React.useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('⏳ Waiting for user ID...');
+      return;
+    }
 
+    console.log('🎧 Setting up click listener for user:', user.id);
+    
     const unsubscribe = onUrlClicked((data: { urlId: string; clicks: number; timestamp: string }) => {
+      console.log('📬 Dashboard received click update:', data);
       setUrls((prevUrls) =>
         prevUrls.map((url) =>
           url.id === data.urlId ? { ...url, clicks: data.clicks } : url
@@ -60,7 +66,7 @@ export default function DashboardPage() {
     });
 
     return unsubscribe;
-  }, []);
+  }, [user?.id, onUrlClicked, addToast]);
 
   const loadUrls = async () => {
     if (!user?.accessToken) return;

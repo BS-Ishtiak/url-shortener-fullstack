@@ -13,11 +13,16 @@ export const initializeWebSocket = (httpServer: HttpServer) => {
   });
 
   io.on("connection", (socket: Socket) => {
-    socket.on("disconnect", () => {});
+    console.log(`New socket connection:`, socket.id);
+    
+    socket.on("disconnect", () => {
+      console.log(`Socket disconnected:`, socket.id);
+    });
 
     // User joins a room for their URLs to receive real-time updates
     socket.on("join-user-room", (userId: string) => {
       socket.join(`user:${userId}`);
+      console.log(`User ${userId} joined room user:${userId}`);
     });
 
     socket.on("leave-user-room", (userId: string) => {
@@ -35,14 +40,13 @@ export const getIO = () => {
   return io;
 };
 
-export const emitClickUpdate = (
-  userId: string,
-  urlId: string,
-  clicks: number
-) => {
+
+export const emitClickUpdate = (userId: string, urlId: string, clicks: number) => {
   try {
     const io = getIO();
     const room = `user:${userId}`;
+    const roomSockets = io.sockets.adapter.rooms.get(room)?.size || 0;
+    console.log(`📤 Emitting to room ${room} (${roomSockets} socket(s)):`, { urlId, clicks });
     io.to(room).emit("url-clicked", {
       urlId,
       clicks,

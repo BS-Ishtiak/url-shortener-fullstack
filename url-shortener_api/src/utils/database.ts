@@ -1,6 +1,7 @@
 import pool, { dbHealthCheck } from "../config/database";
 import { runMigrations } from "../migrations/init";
 
+
 export const initializeDatabase = async (): Promise<void> => {
   try {
     
@@ -11,6 +12,8 @@ export const initializeDatabase = async (): Promise<void> => {
     }
 
     await runMigrations();
+
+   
   } catch (error) {
     console.error("Database initialization failed:", error);
     process.exit(1);

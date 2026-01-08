@@ -8,13 +8,9 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 const startServer = async () => {
   try {
-    // Initialize database
+  
     await initializeDatabase();
-
-    // Create HTTP server for Socket.io support
     const httpServer = http.createServer(app);
-    
-    // Initialize WebSocket
     initializeWebSocket(httpServer);
 
     httpServer.listen(PORT, () => {
