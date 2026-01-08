@@ -17,7 +17,7 @@ export const logClick = async (data: AnalyticsData): Promise<void> => {
     );
   } catch (error) {
     console.error('Error logging click:', error);
-    // Don't throw - analytics failure shouldn't block redirect
+    
   }
 };
 

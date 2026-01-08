@@ -41,10 +41,7 @@ export const getIO = () => {
   return io;
 };
 
-/**
- * Emit click update to a user's dashboard
- * This notifies the user that one of their shortened URLs has been clicked
- */
+
 export const emitClickUpdate = (userId: string, urlId: string, clicks: number) => {
   try {
     const io = getIO();

@@ -8,20 +8,16 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 const startServer = async () => {
   try {
-    // Initialize database
+  
     await initializeDatabase();
-
-    // Create HTTP server for Socket.io support
     const httpServer = http.createServer(app);
-    
-    // Initialize WebSocket
     initializeWebSocket(httpServer);
 
     httpServer.listen(PORT, () => {
       console.log(
-        `\n✅ Server is running on http://${HOST}:${PORT}`
+        `\n Server is running on http://${HOST}:${PORT}`
       );
-      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
     });
 
     // Graceful shutdown handlers

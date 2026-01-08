@@ -1,7 +1,7 @@
 import pool, { dbHealthCheck } from '../config/database';
 import { runMigrations } from '../migrations/init';
 
-// Initialize database
+
 export const initializeDatabase = async (): Promise<void> => {
   try {
     console.log(' Checking database connection...');
@@ -11,12 +11,9 @@ export const initializeDatabase = async (): Promise<void> => {
       throw new Error('Database health check failed');
     }
 
-    console.log(' Database connection successful');
-
-    // Run migrations
     await runMigrations();
 
-    console.log('Database initialized successfully');
+   
   } catch (error) {
     console.error('Database initialization failed:', error);
     process.exit(1);
